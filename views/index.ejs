@@ -35,6 +35,7 @@
     <script type="application/javascript">
         const SERVERADDRESS = "http://127.0.0.1:3000";
         let sensorValue = 0;
+		let sensorValue2 = 0;
 
         // --------------------------------------------------
         // canvas setup and resizing
@@ -71,8 +72,13 @@
         let xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function () {
             if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-                let responseText = xmlhttp.responseText;
-                sensorValue = parseFloat(JSON.parse(responseText).sensorValue);
+                const resp = JSON.parse(xmlhttp.responseText);
+                sensorValue2 = parseFloat(resp.sensorValue2);
+				if (sensorValue2 > 0) {
+                	sensorValue = parseFloat(resp.sensorValue);
+				}
+                // second value available but currently unused
+				console.log(sensorValue, sensorValue2);
             }
         };
 
