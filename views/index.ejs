@@ -2,47 +2,144 @@
 <html>
 
 <head>
-	
+    <title>Sensor Pong</title>
+    <style>
+        /* full‑screen canvas, no scrollbars */
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            /* prevent growing beyond 500px */
+            max-width: 500px;
+            max-height: 500px;
+			background: gray;
+        }
+    </style>
 </head>
 
 <body>
+    <canvas id="gameCanvas"></canvas>
 
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="application/javascript">
+        const SERVERADDRESS = "http://127.0.0.1:3000";
+        let sensorValue = 0;
+
+        // --------------------------------------------------
+        // canvas setup and resizing
+        // --------------------------------------------------
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function resize() {
+            // constrain the canvas to at most 500x500
+            canvas.width = Math.min(window.innerWidth, 500);
+            canvas.height = Math.min(window.innerHeight, 500);
+        }
+
+        window.addEventListener("resize", resize);
+        resize();
+
+        // --------------------------------------------------
+        // game objects
+        // --------------------------------------------------
+        const paddleWidth = 100;
+        const paddleHeight = 10;
+        const paddleYOffset = 10; // distance from bottom
+
+        const ballRadius = 8;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballSpeedX = 3;
+        let ballSpeedY = 3;
+
+        // --------------------------------------------------
+        // communicate with the server to get the sensor value
+        // --------------------------------------------------
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function () {
+            if (xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+                let responseText = xmlhttp.responseText;
+                sensorValue = parseFloat(JSON.parse(responseText).sensorValue);
+            }
+        };
+
+        function getData() {
+            xmlhttp.open("POST", SERVERADDRESS, true);
+            xmlhttp.setRequestHeader("Content-type", "application/json");
+            xmlhttp.send("");
+            setTimeout(getData, 10);
+        }
+
+        getData();
+
+        // --------------------------------------------------
+        // drawing and game logic
+        // --------------------------------------------------
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // calculate paddle position from sensorValue (-1..1 maps to 0..(width-paddle))
+            let paddleX = (sensorValue + 1) / 2 * (canvas.width - paddleWidth);
+            let paddleY = canvas.height - paddleHeight - paddleYOffset;
+
+            // paddle
+            ctx.fillStyle = "#0095DD";
+            ctx.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
+
+            // ball
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#DD9500";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function update() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            // left/right walls
+            if (ballX + ballRadius > canvas.width || ballX - ballRadius < 0) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            // top wall
+            if (ballY - ballRadius < 0) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // bottom (paddle) collision
+            let paddleX = (sensorValue + 1) / 2 * (canvas.width - paddleWidth);
+            let paddleY = canvas.height - paddleHeight - paddleYOffset;
+            if (
+                ballY + ballRadius >= paddleY &&
+                ballY + ballRadius <= paddleY + paddleHeight &&
+                ballX >= paddleX &&
+                ballX <= paddleX + paddleWidth
+            ) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            // reset if ball falls below bottom
+            if (ballY - ballRadius > canvas.height) {
+                ballX = canvas.width / 2;
+                ballY = canvas.height / 2;
+                ballSpeedY = -Math.abs(ballSpeedY);
+            }
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
 </body>
-
-<script src="https://d3js.org/d3.v7.min.js"></script>
-
-<script type="application/javascript">
-
-	const SERVERADDRESS = "http://127.0.0.1:3000"
-
-	// use XML HTTP request to grab data from the server (central)
-	let xmlhttp = new XMLHttpRequest()
-	xmlhttp.onreadystatechange = function () {
-		if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-			let responseText = xmlhttp.responseText
-			let sensorValue = parseFloat(JSON.parse(responseText).sensorValue)
-
-			// use d3 to visualize sensor value as the web page background color
-			let colorValue = Math.max(0, Math.min((sensorValue + 1) * 0.5, 1))
-			console.log(colorValue)
-			let color = "rgba(0, 0, 0, " + colorValue + ")"
-			d3.select("body").style("background-color", color)
-
-		}
-	}
-
-	// periodically grab data
-	let getData = () => {
-		xmlhttp.open("POST", SERVERADDRESS, true)
-		xmlhttp.setRequestHeader("Content-type", "application/json")
-		xmlhttp.send("")
-		setTimeout(() => {
-			getData()
-		}, 10)
-	}
-
-	getData()
-
-</script>
 
 </html>
