@@ -36,6 +36,8 @@
         const SERVERADDRESS = "http://127.0.0.1:3000";
         let sensorValue = 0;
 		let sensorValue2 = 0;
+		let sensorValue3 = 0;
+		let sensorValue4 = 0;
 
         // --------------------------------------------------
         // canvas setup and resizing
@@ -64,7 +66,8 @@
         let ballY = canvas.height / 2;
         let ballSpeedX = 1.5;
         let ballSpeedY = 1.5;
-        let missCount = 0; // how many times ball missed by paddle
+        let missCount = 0; // how many times ball missed by bottom paddle
+        let topMissCount = 0; // how many times ball missed by top paddle
 
         // --------------------------------------------------
         // communicate with the server to get the sensor value
@@ -77,8 +80,11 @@
 				if (sensorValue2 > 0) {
                 	sensorValue = parseFloat(resp.sensorValue);
 				}
-                // second value available but currently unused
-				console.log(sensorValue, sensorValue2);
+                // capture sensorValue3 and sensorValue4 for top paddle
+				sensorValue4 = parseFloat(resp.sensorValue4);
+				if (sensorValue4 > 0) {
+					sensorValue3 = parseFloat(resp.sensorValue3);
+				}
             }
         };
 
@@ -97,11 +103,19 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+            // calculate top paddle position from sensorValue3 (-1..1 maps to 0..(width-paddle))
+            let topPaddleX = (sensorValue3 + 1) / 2 * (canvas.width - paddleWidth);
+            let topPaddleY = paddleYOffset;
+
+            // top paddle
+            ctx.fillStyle = "#FF0000";
+            ctx.fillRect(topPaddleX, topPaddleY, paddleWidth, paddleHeight);
+
             // calculate paddle position from sensorValue (-1..1 maps to 0..(width-paddle))
             let paddleX = (sensorValue + 1) / 2 * (canvas.width - paddleWidth);
             let paddleY = canvas.height - paddleHeight - paddleYOffset;
 
-            // paddle
+            // bottom paddle
             ctx.fillStyle = "#0095DD";
             ctx.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
 
@@ -122,9 +136,29 @@
                 ballSpeedX = -ballSpeedX;
             }
 
-            // top wall
-            if (ballY - ballRadius < 0) {
+            // top paddle collision
+            let topPaddleX = (sensorValue3 + 1) / 2 * (canvas.width - paddleWidth);
+            let topPaddleY = paddleYOffset;
+            if (
+                ballY - ballRadius <= topPaddleY + paddleHeight &&
+                ballY - ballRadius >= topPaddleY &&
+                ballX >= topPaddleX &&
+                ballX <= topPaddleX + paddleWidth
+            ) {
                 ballSpeedY = -ballSpeedY;
+            }
+
+            // reset if ball goes above top
+            if (ballY - ballRadius < 0) {
+                // missed the top paddle
+                topMissCount++;
+                const playerBox = document.getElementById('playerBox');
+                if (playerBox) {
+                    playerBox.value = 'Misses: ' + topMissCount;
+                }
+                ballX = canvas.width / 2;
+                ballY = canvas.height / 2;
+                ballSpeedY = Math.abs(ballSpeedY);
             }
 
             // bottom (paddle) collision
