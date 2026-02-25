@@ -21,7 +21,15 @@
 </head>
 
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div style="display:flex; align-items:flex-start;">
+        <canvas id="gameCanvas"></canvas>
+        <div id="sidebar" style="display:flex; flex-direction:column; margin-left:10px;">
+            <!-- top placeholder for future second player -->
+            <input id="playerBox" type="text" placeholder="Player 1" readonly style="margin-bottom:8px;" />
+            <!-- bottom box shows miss count -->
+            <input id="missBox" type="text" value="Misses: 0" readonly />
+        </div>
+    </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="application/javascript">
@@ -53,8 +61,9 @@
         const ballRadius = 8;
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
-        let ballSpeedX = 3;
-        let ballSpeedY = 3;
+        let ballSpeedX = 1.5;
+        let ballSpeedY = 1.5;
+        let missCount = 0; // how many times ball missed by paddle
 
         // --------------------------------------------------
         // communicate with the server to get the sensor value
@@ -126,6 +135,12 @@
 
             // reset if ball falls below bottom
             if (ballY - ballRadius > canvas.height) {
+                // missed the paddle
+                missCount++;
+                const missBox = document.getElementById('missBox');
+                if (missBox) {
+                    missBox.value = 'Misses: ' + missCount;
+                }
                 ballX = canvas.width / 2;
                 ballY = canvas.height / 2;
                 ballSpeedY = -Math.abs(ballSpeedY);
