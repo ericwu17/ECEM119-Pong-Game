@@ -28,11 +28,20 @@
             <input id="playerBox" type="text" placeholder="Player 1" readonly style="margin-bottom:8px;" />
             <!-- bottom box shows miss count -->
             <input id="missBox" type="text" value="Misses: 0" readonly />
+            <div style="margin-top:8px;">
+                <form action="/scores" method="get">
+                    <button id="exitBtn" style="padding:6px 10px; border-radius:4px; border:0; background:#444; color:#fff; cursor:pointer;">Exit to Scores</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="application/javascript">
+        // player names passed from server
+        const playerTop = "<%= playerTop %>" || 'Top Player';
+        const playerBottom = "<%= playerBottom %>" || 'Bottom Player';
+
         const SERVERADDRESS = "http://127.0.0.1:3000";
         let sensorValue = 0;
 		let sensorValue2 = 0;
@@ -68,6 +77,8 @@
         let ballSpeedY = 1.5;
         let missCount = 0; // how many times ball missed by bottom paddle
         let topMissCount = 0; // how many times ball missed by top paddle
+        let topScore = 0; // increments when top paddle hits the ball
+        let bottomScore = 0; // increments when bottom paddle hits the ball
 
         // --------------------------------------------------
         // communicate with the server to get the sensor value
@@ -125,6 +136,15 @@
             ctx.fillStyle = "#DD9500";
             ctx.fill();
             ctx.closePath();
+
+            // scores (top-right and bottom-right) with player names
+            ctx.fillStyle = "#FFFFFF";
+            ctx.font = "16px Arial";
+            ctx.textAlign = "right";
+            // top player's score near top-right
+            ctx.fillText(playerTop + ': ' + topScore, canvas.width - 10, 20);
+            // bottom player's score near bottom-right
+            ctx.fillText(playerBottom + ': ' + bottomScore, canvas.width - 10, canvas.height - 10);
         }
 
         function update() {
@@ -146,6 +166,14 @@
                 ballX <= topPaddleX + paddleWidth
             ) {
                 ballSpeedY = -ballSpeedY;
+                // increment top paddle score on successful hit
+                topScore++;
+                // notify server of new scores
+                fetch('/update-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topScore: topScore, bottomScore: bottomScore })
+                }).catch(() => {});
             }
 
             // reset if ball goes above top
@@ -171,6 +199,14 @@
                 ballX <= paddleX + paddleWidth
             ) {
                 ballSpeedY = -ballSpeedY;
+                // increment bottom paddle score on successful hit
+                bottomScore++;
+                // notify server of new scores
+                fetch('/update-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topScore: topScore, bottomScore: bottomScore })
+                }).catch(() => {});
             }
 
             // reset if ball falls below bottom

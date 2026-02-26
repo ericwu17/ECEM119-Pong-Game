@@ -119,10 +119,94 @@ const app = express()
 const port = 3000
 
 app.set('view engine', 'ejs');
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// server-side stored player names and scores (volatile in-memory)
+let playerTop = 'Top Player';
+let playerBottom = 'Bottom Player';
+let serverTopScore = 0;
+let serverBottomScore = 0;
+
+const fs = require('fs');
+const path = require('path');
+const DATA_FILE = path.join(__dirname, 'scores.json');
+
+function loadScores() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            const raw = fs.readFileSync(DATA_FILE, 'utf8');
+            const obj = JSON.parse(raw);
+            playerTop = obj.playerTop || playerTop;
+            playerBottom = obj.playerBottom || playerBottom;
+            if (typeof obj.serverTopScore === 'number') serverTopScore = obj.serverTopScore;
+            if (typeof obj.serverBottomScore === 'number') serverBottomScore = obj.serverBottomScore;
+        }
+    } catch (err) {
+        console.error('Could not load scores:', err);
+    }
+}
+
+function saveScores() {
+    try {
+        const obj = { playerTop, playerBottom, serverTopScore, serverBottomScore };
+        fs.writeFileSync(DATA_FILE, JSON.stringify(obj, null, 2), 'utf8');
+    } catch (err) {
+        console.error('Could not save scores:', err);
+    }
+}
+
+loadScores();
 
 app.get('/', (req, res) => {
-    res.render('index')
+    // show welcome page; the game flow starts at /names
+    res.render('welcome')
 })
+
+// names entry page (collect player names before playing)
+app.get('/names', (req, res) => {
+    res.render('names', { playerTop, playerBottom });
+});
+
+app.post('/names', (req, res) => {
+    const { topName, bottomName } = req.body;
+    if (topName) playerTop = topName;
+    if (bottomName) playerBottom = bottomName;
+    // reset server-side scores when new names are set
+    serverTopScore = 0;
+    serverBottomScore = 0;
+    saveScores();
+    res.redirect('/game');
+});
+
+// game route
+app.get('/game', (req, res) => {
+    res.render('index', { playerTop, playerBottom });
+});
+
+// scoreboard page
+app.get('/scores', (req, res) => {
+    res.render('scores', { playerTop, playerBottom, serverTopScore, serverBottomScore });
+});
+
+// endpoint for the client to POST score updates
+app.post('/update-score', (req, res) => {
+    const { topScore, bottomScore } = req.body || {};
+    if (typeof topScore === 'number') serverTopScore = topScore;
+    if (typeof bottomScore === 'number') serverBottomScore = bottomScore;
+    saveScores();
+    res.json({ ok: true });
+});
+
+// ensure scores are saved on shutdown
+process.on('SIGINT', () => {
+    saveScores();
+    process.exit();
+});
+process.on('SIGTERM', () => {
+    saveScores();
+    process.exit();
+});
 
 app.post('/', (req, res) => {
     res.writeHead(200, {

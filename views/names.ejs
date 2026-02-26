@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Enter Player Names</title>
+    <style>
+      body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#111; color:#fff; font-family:Arial,Helvetica,sans-serif }
+      .card { text-align:center; padding:24px; border-radius:8px; background:rgba(255,255,255,0.04); width:320px }
+      label { display:block; text-align:left; margin:8px 0 4px }
+      input[type=text] { width:100%; padding:8px; border-radius:4px; border:1px solid #333; background:#222; color:#fff }
+      .row { display:flex; gap:8px; margin-top:12px }
+      .btn { flex:1; padding:10px 14px; border:0; border-radius:6px; cursor:pointer }
+      .btn.primary { background:#0b84ff; color:#fff }
+      .btn.ghost { background:#444; color:#ddd }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Player Names</h2>
+      <form action="/names" method="post">
+        <label for="topName">Top player name</label>
+        <input id="topName" name="topName" type="text" value="<%= playerTop %>" />
+        <label for="bottomName">Bottom player name</label>
+        <input id="bottomName" name="bottomName" type="text" value="<%= playerBottom %>" />
+        <div class="row">
+          <button class="btn ghost" type="button" onclick="location.href='/'">Cancel</button>
+          <button class="btn primary" type="submit">Start Game</button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

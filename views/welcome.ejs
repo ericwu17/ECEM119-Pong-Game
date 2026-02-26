@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome</title>
+    <style>
+      body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#222; color:#fff; font-family:Arial,Helvetica,sans-serif }
+      .card { text-align:center; padding:24px; border-radius:8px; background:rgba(255,255,255,0.04); box-shadow:0 6px 18px rgba(0,0,0,0.6) }
+      h1 { margin:0 0 16px 0; font-size:28px }
+      .buttons { display:flex; gap:12px; justify-content:center }
+      .btn { padding:10px 18px; border:0; border-radius:6px; cursor:pointer; font-size:14px }
+      .btn.primary { background:#0b84ff; color:#fff }
+      .btn.blank { background:#444; color:#ddd }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Welcome to Pong Game!</h1>
+      <div class="buttons">
+        <form action="/names" method="get" style="display:inline">
+          <button class="btn primary" type="submit">Play Game</button>
+        </form>
+        <form action="/scores" method="get" style="display:inline">
+          <button class="btn blank" type="submit">Scoreboard</button>
+        </form>
+        <button class="btn blank" type="button" onclick="closePage()">Exit</button>
+      </div>
+      <script>
+        function closePage() {
+          // Try to close the window (works for windows opened via script)
+          try { window.close(); } catch (e) {}
+          // Fallback: navigate to a blank page and clear content
+          try {
+            window.location.href = 'about:blank';
+            document.documentElement.innerHTML = '';
+          } catch (e) {}
+        }
+      </script>
+    </div>
+  </body>
+</html>

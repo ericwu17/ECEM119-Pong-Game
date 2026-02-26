@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Scoreboard</title>
+    <style>
+      body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#0f1720; color:#fff; font-family:Arial,Helvetica,sans-serif }
+      .card { padding:24px; border-radius:8px; background:rgba(255,255,255,0.03); width:360px; text-align:center }
+      h2 { margin-top:0 }
+      .score-row { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.04) }
+      .buttons { display:flex; gap:8px; margin-top:16px }
+      .btn { flex:1; padding:10px; border-radius:6px; border:0; cursor:pointer }
+      .btn.primary { background:#0b84ff; color:#fff }
+      .btn.ghost { background:#444; color:#ddd }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2>Scoreboard</h2>
+      <div class="score-row">
+        <div><strong><%= playerTop %></strong></div>
+        <div><%= serverTopScore %></div>
+      </div>
+      <div class="score-row">
+        <div><strong><%= playerBottom %></strong></div>
+        <div><%= serverBottomScore %></div>
+      </div>
+      <div class="buttons">
+        <button class="btn ghost" onclick="location.href='/'">Exit</button>
+        <button class="btn primary" onclick="location.href='/names'">Play Game</button>
+      </div>
+    </div>
+  </body>
+</html>
